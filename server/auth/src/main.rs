@@ -4,13 +4,11 @@
 //! correct with the database. If the combination is correct, the client
 //! will be transferred to the message server of their choice.
 
-use bytes::Bytes;
-use msg_connect::MsgConnect;
 use std::env;
-use tq_network::{Actor, ActorHandle, PacketDecode, PacketHandler, PacketID, TQCipher};
+use tq_network::TQCipher;
 #[cfg(feature = "server")]
 use tq_server::TQServer;
-use wasmtime::{Config, Engine, ExternRef, Linker, Module, Store};
+use wasmtime::{Config, Engine, Linker, Module};
 
 use auth::error::Error;
 use auth::{Runtime, State};
@@ -53,9 +51,13 @@ Copyright 2020-2023 Shady Khalifa (@shekohex)
     tracing::info!("Loading Packet and handlers..");
 
     let msg_connect = Module::from_file(&engine, "./target/wasm32-unknown-unknown/wasm/msg_connect.s.wasm")?;
+    let msg_account = Module::from_file(&engine, "./target/wasm32-unknown-unknown/wasm/msg_account.s.wasm")?;
     tracing::info!("Initializing State ..");
     let state = State::init().await?;
-    let packets = auth::Packets { msg_connect };
+    let packets = auth::Packets {
+        msg_connect,
+        msg_account,
+    };
 
     let static_runtime = {
         let runtime = Runtime {
