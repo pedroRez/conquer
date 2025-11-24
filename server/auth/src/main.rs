@@ -50,8 +50,8 @@ Copyright 2020-2023 Shady Khalifa (@shekohex)
     auth::add_to_linker(&mut linker)?;
     tracing::info!("Loading Packet and handlers..");
 
-    let msg_connect = Module::from_file(&engine, "./target/wasm32-unknown-unknown/wasm/msg_connect.s.wasm")?;
-    let msg_account = Module::from_file(&engine, "./target/wasm32-unknown-unknown/wasm/msg_account.s.wasm")?;
+    let msg_connect = load_module(&engine, "msg_connect", msg_connect::WASM_BINARY)?;
+    let msg_account = load_module(&engine, "msg_account", msg_account::WASM_BINARY)?;
     tracing::info!("Initializing State ..");
     let state = State::init().await?;
     let packets = auth::Packets {
@@ -113,4 +113,9 @@ fn setup_logger(verbosity: i32) -> Result<(), Error> {
         .with_env_filter(env_filter);
     logger.init();
     Ok(())
+}
+
+fn load_module(engine: &Engine, name: &str, path: Option<&str>) -> Result<Module, Error> {
+    let wasm_path = path.ok_or_else(|| Error::Other(format!("{name} wasm binary was not built")))?;
+    Module::from_file(engine, wasm_path).map_err(Error::from)
 }
